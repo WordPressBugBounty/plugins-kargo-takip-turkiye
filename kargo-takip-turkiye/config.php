@@ -14,7 +14,7 @@ return array(
         ),
         "aras" => array(
             "company" => "Aras Kargo",
-            "url" => "https://www.araskargo.com.tr/trmobile/cargo_tracking_detail.aspx?query=1&querydetail=2&ref_no=&seri_no=&irs_no=&kargo_takip_no=",
+            "url" => "https://ebranch.araskargo.com.tr/track/",
             "logo" => "assets/logos/aras.png"
         ),
         "mng" => array(
@@ -87,6 +87,61 @@ return array(
             "url" => "https://www.sendeo.com.tr/kargo-takip/",
             "logo" => "assets/logos/sendeo.png"
         ),
-        
+        "carrtell" => array(
+            "company" => "Carrtell Kargo",
+            "url" => "https://takip.carrtell.co/",
+            "logo" => "assets/logos/carrtell.png"
+        ),
+        "kolaygelsin" => array(
+            "company" => "Kolay Gelsin",
+            "url" => "https://kolaygelsin.com/tracking?code=",
+            "logo" => "assets/logos/kolaygelsin.png"
+        ),
+        "dhlecommerce" => array(
+            "company" => "DHL eCommerce",
+            "url" => "https://www.dhlecommerce.com.tr/gonderitakip?gonderino=",
+            "logo" => "assets/logos/dhlecommerce.png"
+        ),
+        "cdek" => array(
+            "company" => "CDEK",
+            "url" => "https://cdektr.com/tr/tracking?code=",
+            "logo" => "assets/logos/cdek.png"
+        ),
+        "birgunde" => array(
+            "company" => "Birgünde Kargo",
+            "url" => "https://takip.birgundekargo.com/?code=",
+            "logo" => "assets/logos/birgunde.png"
+        ),
+        "brinks" => array(
+            "company" => "Brinks Kargo",
+            "url" => "https://connect.brinks.com.tr/tracking?id=",
+            "logo" => "assets/logos/brinks.png"
+        ),
+        "jetizz" => array(
+            "company" => "Jetizz",
+            "url" => "https://app.jetizz.com/gonderi-takip?code=",
+            "logo" => "assets/logos/jetizz.png"
+        ),
+        "kargoturk" => array(
+            "company" => "Kargo Türk",
+            "url" => "http://online.kargoturk.com.tr:88/hareket.asp?har_kod=",
+            "logo" => "assets/logos/kargoturk.png"
+        ),
+        "kargoist" => array(
+            "company" => "Kargoist",
+            "url" => "http://kargotakip.kargoist.com/hareket.asp?har_kod=",
+            "logo" => "assets/logos/kargoist.png"
+        ),
+        "packupp" => array(
+            "company" => "PackUpp",
+            "url" => "https://tracking.packupp.com/",
+            "logo" => "assets/logos/packupp.png"
+        ),
+        "scotty" => array(
+            "company" => "Scotty",
+            "url" => "https://nerede.scotty.com.tr/kargom-nerede?code=",
+            "logo" => "assets/logos/scotty.png"
+        ),
+
     )
 );
