@@ -1,4 +1,7 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
 return array(
     "cargoes" => array(
@@ -82,7 +85,7 @@ return array(
             "url" => "https://www.hepsijet.com/gonderi-takibi/",
             "logo" => "assets/logos/hepsijet.png"
         ),
-        "Sendeo" => array(
+        "sendeo" => array(
             "company" => "Sendeo Kargo",
             "url" => "https://www.sendeo.com.tr/kargo-takip/",
             "logo" => "assets/logos/sendeo.png"
@@ -129,7 +132,7 @@ return array(
         ),
         "kargoist" => array(
             "company" => "Kargoist",
-            "url" => "http://kargotakip.kargoist.com/hareket.asp?har_kod=",
+            "url" => "https://kargoist.com/tracking/{code}",
             "logo" => "assets/logos/kargoist.png"
         ),
         "packupp" => array(

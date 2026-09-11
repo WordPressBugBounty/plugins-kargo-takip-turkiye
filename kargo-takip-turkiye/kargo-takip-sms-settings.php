@@ -1,4 +1,7 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
 include('kobikom-helper.php');
 
@@ -124,7 +127,7 @@ function kargoTR_sms_setting_page() {
                                             echo '<select name="NetGsm_Header" id="NetGsm_Header" class="kargotr-select">';
                                             foreach ($netGsm_Header_get as $value) {
                                                 $selected = ($NetGsm_Header == $value) ? 'selected' : '';
-                                                echo '<option ' . $selected . ' value="' . esc_attr($value) . '">' . esc_html($value) . '</option>';
+                                                echo '<option ' . esc_attr($selected) . ' value="' . esc_attr($value) . '">' . esc_html($value) . '</option>';
                                             }
                                             echo '</select>';
                                         }
@@ -206,7 +209,7 @@ function kargoTR_sms_setting_page() {
                                             echo '<select name="Kobikom_Header" id="Kobikom_Header" class="kargotr-select">';
                                             foreach ($KobiKom_get_Headers as $value) {
                                                 $selected = ($Kobikom_option_Header == $value['title']) ? 'selected' : '';
-                                                echo '<option ' . $selected . ' value="' . esc_attr($value['title']) . '">' . esc_html($value['title']) . '</option>';
+                                                echo '<option ' . esc_attr($selected) . ' value="' . esc_attr($value['title']) . '">' . esc_html($value['title']) . '</option>';
                                             }
                                             echo '</select>';
                                         }
@@ -982,7 +985,7 @@ function kargoTR_sms_setting_page() {
                     action: 'kargotr_send_test_sms',
                     phone: phone,
                     template: template,
-                    nonce: '<?php echo wp_create_nonce('kargotr_test_sms'); ?>'
+                    nonce: '<?php echo esc_js(wp_create_nonce('kargotr_test_sms')); ?>'
                 },
                 beforeSend: function() {
                     $btn.prop('disabled', true).text('Gönderiliyor...');
@@ -1053,8 +1056,8 @@ function kargoTR_ajax_send_test_sms() {
 
     // Örnek verilerle şablonu doldur
     $message = str_replace(
-        array('{customer_name}', '{order_id}', '{company_name}', '{tracking_number}', '{tracking_url}'),
-        array('Test Müşteri', '99999', 'PTT Kargo', 'TEST123456', 'https://gonderitakip.ptt.gov.tr/Track/Verify?q=TEST123456'),
+        array('{customer_name}', '{order_id}', '{company_name}', '{tracking_number}', '{tracking_url}', '{estimated_delivery_date}'),
+        array('Test Müşteri', '99999', 'PTT Kargo', 'TEST123456', 'https://gonderitakip.ptt.gov.tr/Track/Verify?q=TEST123456', date_i18n(get_option('date_format'), strtotime('+3 days'))),
         $template
     );
 

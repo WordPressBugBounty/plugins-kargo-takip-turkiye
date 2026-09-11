@@ -1,4 +1,7 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
 
 function kargoTR_get_netgsm_headers($username, $password) {
     // NetGSM REST v2 API for message headers
@@ -296,8 +299,6 @@ function kargoTR_netgsm_send_rest_v2($username, $password, $msgheader, $messages
         'msgheader'   => $msgheader,
         'messages'    => $messages,
         'encoding'    => 'TR',
-        'iysfilter'   => '',
-        'partnercode' => '',
     );
 
     $request = wp_remote_post($url, array(
