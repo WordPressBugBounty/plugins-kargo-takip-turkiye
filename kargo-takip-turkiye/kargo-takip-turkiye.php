@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: Kargo Takip Türkiye
- * Description: Bu eklenti sayesinde basit olarak müşterilerinize kargo takip linkini ulaştırabilirsiniz. Mail ve SMS gönderebilirsiniz.
- * Version: 0.2.6
+ * Plugin Name: Kargo Takip, WooCommerce & Dokan Kargo Takip, SMS ve E-posta
+ * Description: WooCommerce ve Dokan siparişlerinize kargo takip bilgisi ekleyin, müşterilerinize otomatik SMS ve e-posta bildirimi gönderin.
+ * Version: 0.5
  * Author: Unbelievable.Digital
  * Author URI: https://unbelievable.digital
  * Text Domain: kargo-takip-turkiye
@@ -141,6 +141,7 @@ include 'kargo-takip-status-mapping.php';
 include 'kargo-takip-review-notice.php';
 // include 'kargo-takip-checkout-fields.php'; // Disabled
 include 'kargo-takip-dashboard.php';
+include 'kargo-takip-dokan.php';
 add_action( 'admin_menu', 'kargoTR_register_admin_menu' );
 function kargoTR_register_admin_menu() {
     $menu_slug = 'kargo-takip-turkiye';
@@ -177,6 +178,14 @@ function kargoTR_register_settings() {
         'kargo_estimated_delivery_days' => '3',
         'kargo_estimated_delivery_enabled' => $defaultValues['select'],
     );
+
+    // Müşteriye görünen metinler: boş bırakılırsa varsayılan (Türkçe) metin kullanılır
+    foreach (kargoTR_default_customer_texts() as $text_key => $text_default) {
+        if ($text_key === 'kargoTR_text_email_subject') {
+            continue; // E-posta konusu E-Mail Ayarları sayfasında
+        }
+        $general_settings[$text_key] = '';
+    }
     foreach ($general_settings as $key => $default) {
         register_setting('kargoTR-general-settings-group', $key, array('default' => $default));
     }
@@ -185,6 +194,7 @@ function kargoTR_register_settings() {
     $email_settings = array(
         'kargoTr_email_template' => $defaultValues['emailTemplate'],
         'kargoTr_use_wc_template' => $defaultValues['select'],
+        'kargoTR_text_email_subject' => '',
     );
     foreach ($email_settings as $key => $default) {
         register_setting('kargoTR-email-settings-group', $key, array('default' => $default));
@@ -344,6 +354,48 @@ function kargoTR_setting_page() {
                                 <strong>SMS Bildirimleri:</strong> SMS ayarlarını yapılandırmak için
                                 <a href="<?php echo esc_url(admin_url('admin.php?page=kargo-takip-turkiye-sms-settings')); ?>">SMS Ayarları</a>
                                 sayfasını ziyaret edin.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KART: Müşteriye Görünen Metinler -->
+                    <div class="kargotr-card">
+                        <div class="kargotr-card-header">
+                            <h2>
+                                <span class="dashicons dashicons-translation"></span>
+                                Müşteriye Görünen Metinler
+                            </h2>
+                            <p class="description">Müşterilerinizin gördüğü metinleri kendi dilinizde yazabilirsiniz. Boş bırakırsanız varsayılan Türkçe metin kullanılır.</p>
+                        </div>
+                        <div class="kargotr-card-body">
+                            <?php
+                            $customer_text_labels = array(
+                                'kargoTR_text_preparing' => 'Kargo hazırlanıyor yazısı',
+                                'kargoTR_text_company_label' => 'Kargo firması etiketi',
+                                'kargoTR_text_code_label' => 'Takip numarası etiketi',
+                                'kargoTR_text_estimated_label' => 'Tahmini teslimat etiketi',
+                                'kargoTR_text_track_link' => 'Takip bağlantısı metni',
+                                'kargoTR_text_account_button' => 'Hesabım sayfasındaki buton',
+                            );
+                            $customer_text_defaults = kargoTR_default_customer_texts();
+                            ?>
+                            <div class="kargotr-form-grid">
+                                <?php foreach ($customer_text_labels as $text_key => $label) : ?>
+                                    <div class="kargotr-form-field">
+                                        <label for="<?php echo esc_attr($text_key); ?>"><?php echo esc_html($label); ?></label>
+                                        <input type="text" id="<?php echo esc_attr($text_key); ?>" name="<?php echo esc_attr($text_key); ?>"
+                                               value="<?php echo esc_attr(get_option($text_key, '')); ?>"
+                                               placeholder="<?php echo esc_attr($customer_text_defaults[$text_key]); ?>"
+                                               class="regular-text">
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+
+                            <div class="kargotr-tip" style="margin-top: 16px;">
+                                <span class="dashicons dashicons-email"></span>
+                                <strong>E-posta konusu:</strong> Bildirim e-postasının konu satırını
+                                <a href="<?php echo esc_url(admin_url('admin.php?page=kargo-takip-turkiye-email-settings')); ?>">E-Mail Ayarları</a>
+                                sayfasından değiştirebilirsiniz.
                             </div>
                         </div>
                         <div class="kargotr-card-footer">
@@ -583,6 +635,34 @@ function kargoTR_add_shipment_to_order_statuses($order_statuses) {
 }
 
 add_filter('wc_order_statuses', 'kargoTR_add_shipment_to_order_statuses');
+
+/**
+ * "Kargoya Verildi" ödenmiş statülerden sayılsın
+ * Aksi halde dijital ürün indirmeleri kapanıyor, "onaylı alıcı" yorumu yazılamıyor
+ * ve müşterinin toplam harcaması eksik hesaplanıyor.
+ */
+add_filter('woocommerce_order_is_paid_statuses', 'kargoTR_add_shipment_to_paid_statuses');
+function kargoTR_add_shipment_to_paid_statuses($statuses) {
+    $statuses[] = 'kargo-verildi';
+    return $statuses;
+}
+
+// Kargoya verilmiş siparişlerde dijital ürün indirmesi açık kalsın
+add_filter('woocommerce_order_is_download_permitted', 'kargoTR_allow_downloads_for_shipped', 10, 2);
+function kargoTR_allow_downloads_for_shipped($permitted, $order) {
+    if ($order instanceof WC_Order && $order->has_status('kargo-verildi')) {
+        return true;
+    }
+    return $permitted;
+}
+
+// Siparişler listesine "Kargoya Verildi olarak işaretle" toplu işlemi ekle
+add_filter('bulk_actions-edit-shop_order', 'kargoTR_add_bulk_action');
+add_filter('bulk_actions-woocommerce_page_wc-orders', 'kargoTR_add_bulk_action');
+function kargoTR_add_bulk_action($actions) {
+    $actions['mark_kargo-verildi'] = __('Kargoya Verildi olarak işaretle', 'kargo-takip-turkiye');
+    return $actions;
+}
 
 
 add_action('woocommerce_admin_order_data_after_order_details', 'kargoTR_general_shipment_details_for_admin');
@@ -844,9 +924,28 @@ function kargoTR_general_shipment_details_for_admin($order) {
 add_action('woocommerce_process_shop_order_meta', 'kargoTR_tracking_save_general_details', 45);
 
 function kargoTR_tracking_save_general_details($ord_id) {
-    $order = wc_get_order($ord_id);
-    if (!$order) {
-        return;
+    // Karşılaştırma temizlenmiş değerle ve katı (!==) yapılır; "0123" → "123" gibi değişiklikler de algılanır
+    $posted_company = isset($_POST['tracking_company']) ? wc_clean(wp_unslash($_POST['tracking_company'])) : null;
+    $posted_code = isset($_POST['tracking_code']) ? wc_sanitize_textarea(wp_unslash($_POST['tracking_code'])) : null;
+    $posted_date = isset($_POST['tracking_estimated_date']) ? wc_clean(wp_unslash($_POST['tracking_estimated_date'])) : null;
+
+    kargoTR_apply_tracking($ord_id, $posted_company, $posted_code, $posted_date);
+}
+
+/**
+ * Kargo bilgisini siparişe uygular: meta kaydı, sipariş notu, durum ve bildirimler
+ * Hem wp-admin sipariş ekranı hem de Dokan satıcı paneli bu fonksiyonu kullanır.
+ *
+ * @param int         $order_id sipariş ID
+ * @param string|null $company  kargo firması anahtarı (null = dokunma)
+ * @param string|null $code     takip kodu (null = dokunma)
+ * @param string|null $date     tahmini teslimat tarihi (null = dokunma)
+ * @return bool bildirim tetiklendi mi
+ */
+function kargoTR_apply_tracking($order_id, $company, $code, $date = null) {
+    $order = wc_get_order($order_id);
+    if (!$order instanceof WC_Order) {
+        return false;
     }
 
     // HPOS uyumlu meta okuma
@@ -861,26 +960,22 @@ function kargoTR_tracking_save_general_details($ord_id) {
     $tracking_changed = false;
     $meta_updated = false;
 
-    // Karşılaştırma temizlenmiş değerle ve katı (!==) yapılır; "0123" → "123" gibi değişiklikler de algılanır
-    $posted_company = isset($_POST['tracking_company']) ? wc_clean(wp_unslash($_POST['tracking_company'])) : null;
-    $posted_code = isset($_POST['tracking_code']) ? wc_sanitize_textarea(wp_unslash($_POST['tracking_code'])) : null;
-
-    if ($posted_company !== null && $posted_company !== (string) $tracking_company) {
-        $order->update_meta_data('tracking_company', $posted_company);
+    if ($company !== null && $company !== (string) $tracking_company) {
+        $order->update_meta_data('tracking_company', $company);
         $note = __("Kargo firması güncellendi.", 'kargo-takip-turkiye');
         $tracking_changed = true;
         $meta_updated = true;
     }
 
-    if ($posted_code !== null && $posted_code !== (string) $tracking_code) {
-        $order->update_meta_data('tracking_code', $posted_code);
+    if ($code !== null && $code !== (string) $tracking_code) {
+        $order->update_meta_data('tracking_code', $code);
         $note = __("Kargo takip kodu güncellendi.", 'kargo-takip-turkiye');
         $tracking_changed = true;
         $meta_updated = true;
     }
 
-    if (isset($_POST['tracking_estimated_date']) && $tracking_estimated_date != $_POST['tracking_estimated_date']) {
-        $order->update_meta_data('tracking_estimated_date', wc_clean($_POST['tracking_estimated_date']));
+    if ($date !== null && $date !== (string) $tracking_estimated_date) {
+        $order->update_meta_data('tracking_estimated_date', $date);
         $meta_updated = true;
     }
 
@@ -894,32 +989,38 @@ function kargoTR_tracking_save_general_details($ord_id) {
     }
 
     // Only send notifications if tracking info is present AND it has changed
-    if (!empty($_POST['tracking_company']) && !empty($_POST['tracking_code']) && $tracking_changed) {
-        // Save specific timestamp for statistics (HPOS uyumlu)
-        $order->update_meta_data('_kargo_takip_timestamp', current_time('mysql'));
-        $order->save();
-
-        // Review notice için sayacı artır
-        kargoTR_increment_tracking_orders_count();
-
-        // Tamamlanmış, iptal edilmiş veya iade edilmiş siparişlerin durumuna dokunma:
-        // aksi halde "sipariş tamamlandı" e-postası ikinci kez gönderiliyor
-        if (!in_array($order->get_status(), kargoTR_protected_order_statuses(), true)) {
-            $order->update_status('kargo-verildi', 'Sipariş takip kodu eklendi/güncellendi');
-        }
-
-        if ($mail_send_general_option == 'yes') {
-            do_action('order_ship_mail', $ord_id);
-        }
-
-        if ($sms_provider == 'NetGSM') {
-            do_action('order_send_sms', $ord_id);
-        }
-
-        if ($sms_provider == 'Kobikom') {
-            do_action('order_send_sms_kobikom', $ord_id);
-        }
+    if (empty($company) || empty($code) || !$tracking_changed) {
+        return false;
     }
+
+    // Save specific timestamp for statistics (HPOS uyumlu)
+    $order->update_meta_data('_kargo_takip_timestamp', current_time('mysql'));
+    $order->save();
+
+    // Review notice sayacı: yalnızca ilk kez kargo bilgisi girilen siparişlerde artar
+    if (empty($tracking_code)) {
+        kargoTR_increment_tracking_orders_count();
+    }
+
+    // Tamamlanmış, iptal edilmiş veya iade edilmiş siparişlerin durumuna dokunma:
+    // aksi halde "sipariş tamamlandı" e-postası ikinci kez gönderiliyor
+    if (!in_array($order->get_status(), kargoTR_protected_order_statuses(), true)) {
+        $order->update_status('kargo-verildi', 'Sipariş takip kodu eklendi/güncellendi');
+    }
+
+    if ($mail_send_general_option == 'yes') {
+        do_action('order_ship_mail', $order_id);
+    }
+
+    if ($sms_provider == 'NetGSM') {
+        do_action('order_send_sms', $order_id);
+    }
+
+    if ($sms_provider == 'Kobikom') {
+        do_action('order_send_sms_kobikom', $order_id);
+    }
+
+    return true;
 }
 
 
@@ -944,7 +1045,7 @@ function kargoTR_shipment_details($order) {
     if ( $order->get_status() != 'cancelled') {
         if ($tracking_company == '') {
             if ($kargo_hazirlaniyor_text_option =='yes') {
-                echo "Kargo hazırlanıyor";
+                echo esc_html(kargoTR_text('kargoTR_text_preparing'));
             } else {
             ?>
 
@@ -955,15 +1056,15 @@ function kargoTR_shipment_details($order) {
             ?>
 <div class="shipment-order-page">
     <h2 id="kargoTakipSection">Kargo Takip</h2>
-    <h4>Kargo firması : </h4> <?php echo esc_html(kargoTR_get_company_name($tracking_company)); ?>
-    <h4><?php esc_html_e( 'Kargo takip numarası:', 'kargo-takip-turkiye' );?></h4> <?php echo esc_html($tracking_code); ?>
+    <h4><?php echo esc_html(kargoTR_text('kargoTR_text_company_label')); ?></h4> <?php echo esc_html(kargoTR_get_company_name($tracking_company)); ?>
+    <h4><?php echo esc_html(kargoTR_text('kargoTR_text_code_label')); ?></h4> <?php echo esc_html($tracking_code); ?>
     <?php
     $estimated_delivery_enabled = get_option('kargo_estimated_delivery_enabled', 'no');
     if ($estimated_delivery_enabled === 'yes' && !empty($tracking_estimated_date)): ?>
-        <h4><?php esc_html_e( 'Tahmini Teslimat:', 'kargo-takip-turkiye' );?></h4> <?php echo esc_html(date_i18n(get_option('date_format'), strtotime($tracking_estimated_date))); ?>
+        <h4><?php echo esc_html(kargoTR_text('kargoTR_text_estimated_label')); ?></h4> <?php echo esc_html(date_i18n(get_option('date_format'), strtotime($tracking_estimated_date))); ?>
     <?php endif; ?>
     <br>
-    <?php echo '<a href="' . esc_url(kargoTR_getCargoTrack($tracking_company, $tracking_code)) . '" target="_blank" rel="noopener noreferrer">'; esc_html_e( 'Kargonuzu takibi için buraya tıklayın.', 'kargo-takip-turkiye' );  echo '</a>'; ?>
+    <?php echo '<a href="' . esc_url(kargoTR_getCargoTrack($tracking_company, $tracking_code)) . '" target="_blank" rel="noopener noreferrer">'; echo esc_html(kargoTR_text('kargoTR_text_track_link'));  echo '</a>'; ?>
 </div>
 <?php
         }
@@ -982,7 +1083,7 @@ function kargoTR_add_kargo_button_in_order($actions, $order) {
         $cargoTrackingUrl = kargoTR_getCargoTrack($tracking_company, $tracking_code);
         $actions[$action_slug] = array(
             'url' => $cargoTrackingUrl,
-            'name' => 'Kargo Takibi',
+            'name' => kargoTR_text('kargoTR_text_account_button'),
         );
         return $actions;
     } else {
@@ -1133,7 +1234,7 @@ function kargoTR_kargo_eposta_details($order_id) {
     $mailer = WC()->mailer();
 
     $mailTo = $order->get_billing_email();
-    $subject = "Siparişiniz Kargoya Verildi";
+    $subject = kargoTR_text('kargoTR_text_email_subject');
     $details = kargoTR_kargo_bildirim_icerik($order, $mailer, $subject);
     $mailHeaders[] = "Content-Type: text/html\r\n";
 

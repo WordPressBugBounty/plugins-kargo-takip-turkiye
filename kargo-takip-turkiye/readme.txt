@@ -1,33 +1,43 @@
-=== Kargo Takip ===
+=== Kargo Takip, WooCommerce & Dokan Kargo Takip, SMS ve E-posta ===
 Contributors: zgrkaralar,unbelievabledigital
-Tags: kargo, kargo takip, aras kargo, yurtiçi kargo, yurt içi kargo
+Tags: kargo takip, kargo, woocommerce, dokan, sms
 Requires at least: 4.9
 Tested up to: 7.1
 WC tested up to: 11.1.0
 Requires PHP: 7.1
-Stable tag: 0.2.6
+Stable tag: 0.5
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-WooCommerce siparişlerinize kargo takip bilgisi ekleyin ve müşterilerinize otomatik e-posta/SMS bildirimleri gönderin.
+WooCommerce ve Dokan siparişlerinize kargo takip bilgisi ekleyin, müşterilerinize otomatik SMS ve e-posta bildirimi gönderin.
 
 == Description ==
 
 **3.000'den fazla aktif site tarafından kullanılmaktadır!**
 
-Kargo Takip Türkiye eklentisi ile WooCommerce siparişlerinize kargo takip bilgisi ekleyebilir ve müşterilerinize otomatik bildirimler gönderebilirsiniz.
+Kargo Takip, WooCommerce siparişlerine kargo firması ve takip numarası eklemenizi sağlar. Bilgiyi girdiğiniz anda sipariş durumu "Kargoya Verildi" olur, müşteriye takip bağlantısını içeren SMS ve e-posta gider. Müşteri kargosunu hesabım sayfasından da takip edebilir.
 
-= Özellikler =
+= Öne çıkan özellikler =
 
-* **HPOS Uyumlu** - WooCommerce High-Performance Order Storage desteği
-* **27+ Kargo Firması** - Türkiye'nin önde gelen kargo firmalarını destekler
-* **Otomatik E-posta** - Kargo bilgisi girildiğinde otomatik e-posta gönderimi
-* **SMS Entegrasyonu** - NetGSM ve Kobikom SMS desteği
-* **Toplu Kargo Girişi** - Excel/CSV ile toplu kargo bilgisi girişi
-* **REST API** - Dış sistemlerle entegrasyon için API desteği
-* **Özelleştirilebilir Şablonlar** - E-posta ve SMS şablonlarını düzenleyebilme
-* **Tahmini Teslimat** - Kargo firmasına göre tahmini teslimat tarihi hesaplama
-* **Dashboard** - Kargo istatistikleri ve özet görünümü
+* **Dokan uyumlu** - Çok satıcılı pazaryerlerinde satıcılar kargo firmasını ve takip numarasını kendi panellerinden girer. Her satıcı yalnızca kendi siparişini düzenleyebilir, çok satıcılı siparişte müşteri her satıcının kargo bilgisini ayrı ayrı görür
+* **27+ kargo firması** - Türkiye'nin önde gelen kargo firmaları hazır tanımlı, istediğiniz firmayı kendiniz de ekleyebilirsiniz
+* **SMS bildirimi** - NetGSM ve Kobikom desteği, kendi mesaj şablonunuzla
+* **E-posta bildirimi** - WooCommerce e-posta şablonuyla uyumlu, düzenlenebilir içerik
+* **Toplu kargo girişi** - Excel/CSV dosyasıyla yüzlerce siparişe tek seferde kargo bilgisi. Türkçe Excel dosyaları (noktalı virgül ayracı) desteklenir
+* **REST API** - Dış sistemlerinizden kargo bilgisi gönderin
+* **Durum eşlemesi** - Başka bir eklenti veya entegrasyon siparişi "shipped" yaptığında kargo bildirimleri otomatik tetiklenir
+* **Tahmini teslimat** - Kargo firmasına göre tahmini teslimat tarihi hesaplanır ve müşteriye bildirilir
+* **HPOS uyumlu** - WooCommerce High-Performance Order Storage ile tam uyumlu
+* **Panel özeti** - Bekleyen ve son 24 saatte kargolanan sipariş sayısı
+
+= Nasıl çalışır? =
+
+1. Siparişi açın, kargo firmasını seçin ve takip numarasını girin
+2. Sipariş durumu otomatik olarak "Kargoya Verildi" olur
+3. Müşteriye takip bağlantısını içeren SMS ve e-posta gider
+4. Müşteri, Hesabım > Siparişler sayfasından kargosunu takip eder
+
+Dokan kullanıyorsanız satıcılar aynı işlemi kendi satıcı panellerindeki sipariş detay sayfasından yapar.
 
 = Desteklenen Kargo Firmaları (27+) =
 
@@ -77,6 +87,37 @@ Eklentinin çalışabilmesi için woocommerce eklentisi gereklidir. Eklentiyi ak
 2.Siparişler sayfası görünümü
 
 == Changelog ==
+
+= 0.5 =
+* **Müşteriye görünen tüm metinler artık ayarlanabilir** - E-posta konusu, "Kargo hazırlanıyor" yazısı, kargo firması ve takip numarası etiketleri, takip bağlantısı metni ve Hesabım sayfasındaki buton kendi dilinizde yazılabilir. Çok dilli ve yabancı dildeki mağazalar artık eklenti dosyalarını düzenlemek zorunda değil
+* E-posta konusu E-Mail Ayarları, diğer metinler Genel Ayarlar sayfasından düzenlenir; boş bırakılan alanlarda varsayılan Türkçe metin kullanılır
+* Çeviri şablonu (languages/kargo-takip-turkiye.pot) eklendi; Loco Translate gibi araçlarla eklenti çevrilebilir
+* E-posta içeriğindeki {order_id} artık müşterinin gördüğü sipariş numarasını yazıyor
+
+= 0.4 =
+* Eklenti adı ve açıklaması güncellendi: Dokan uyumluluğu, toplu kargo girişi, durum eşlemesi ve REST API gibi özellikler artık açıklamada yer alıyor
+* Geliştirme tarafında otomatik test altyapısı eklendi; her değişiklik PHP 7.4 ve 8.3 üzerinde WordPress, WooCommerce ve Dokan ile otomatik olarak test ediliyor (eklenti paketine dahil değildir)
+
+= 0.3 =
+* **Dokan uyumluluğu** - Kargo firması ve takip numarası alanları artık Dokan satıcı panelindeki sipariş detayında da görünüyor. Satıcı yalnızca kendi siparişini düzenleyebilir; çok satıcılı siparişlerde her satıcının kargo bilgisi ana siparişe işlenir ve müşteriye ayrı ayrı gösterilir
+* **Toplu CSV girişi yenilendi** - Türkçe Excel dosyaları (noktalı virgül ayracı ve BOM) artık çalışıyor, başlık satırı otomatik atlanıyor
+* Aynı CSV ikinci kez yüklendiğinde değişmeyen satırlar atlanıyor, müşterilere tekrar bildirim gönderilmiyor; büyük dosyalarda zaman aşımı koruması eklendi
+* SMS servis sağlayıcısı yanıt vermediğinde kayıtlı SMS başlığının silinmesi engellendi
+* Takip kodu adrese eklenirken kodlanıyor; boşluk, # veya & içeren kodlarda takip bağlantısı artık bozulmuyor
+* Telefon numarası düzeltmesi: 0090 ile başlayan numaralar tanınıyor, fatura telefonu yoksa teslimat telefonu kullanılıyor
+* İade (refund) kaydının numarası REST API'ye veya CSV'ye geldiğinde oluşan ölümcül hata giderildi
+* "Kargoya Verildi" durumu artık ödenmiş sayılıyor: dijital ürün indirmeleri açık kalıyor, "onaylı alıcı" yorumları ve müşteri harcama toplamı doğru hesaplanıyor
+* Siparişler listesine "Kargoya Verildi olarak işaretle" toplu işlemi eklendi
+* Panel widget'ındaki "Son 24 Saatte Kargolanan" sayısı HPOS kapalıyken de doğru hesaplanıyor; widget artık yalnızca sipariş yetkisi olanlara gösteriliyor
+* Durum eşlemesi: çift bildirim engeli artık yalnızca bildirimi durduruyor, sipariş durumu yine güncelleniyor
+* Durum eşlemesinde kargo bilgisi olmayan siparişlere gereksiz not düşürülmesi kaldırıldı
+* Üçüncü taraf eklentiler sipariş durumunu farklı biçimde tetiklediğinde oluşan hata giderildi
+* NetGSM kredi bakiyesi artık görünüyor (doğru sorgu tipi kullanılıyor)
+* SMS Ayarları sayfası hızlandırıldı: sağlayıcı sorguları önbelleğe alınıyor ve yalnızca seçili sağlayıcıya istek atılıyor
+* SMS şablonundaki {order_id} artık müşterinin gördüğü sipariş numarasını yazıyor
+* Özel kargo firmaları düzenlenebiliyor ve silinebiliyor; siparişlerde kullanılan firma yanlışlıkla silinemez
+* E-posta önizleme ve test e-postasında kesme işareti sorunu, bozuk bağlantı ve sabit tarih düzeltildi
+* Değerlendirme bildirimi sayacı yalnızca ilk kargo girişinde artıyor
 
 = 0.2.6 =
 * **Önemli düzeltme** - Sipariş kaydedildiğinde "Kargoya Verildi" durumunun hemen ardından eski duruma dönmesi giderildi
