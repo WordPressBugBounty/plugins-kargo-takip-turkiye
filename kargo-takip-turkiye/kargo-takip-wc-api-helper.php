@@ -73,6 +73,23 @@ function kargoTR_api_add_tracking_code($request) {
         return new WP_Error('rest_invalid_shipment_company', 'Invalid shipment company. Should be same as document list', array('status' => 400));
     }
 
+    // Kullanımdan kaldırılan firma geldiyse devralan firmaya kaydet
+    $deprecated_note = '';
+    $mapped_company = kargoTR_map_deprecated_key($shipment_company);
+    if ($mapped_company !== $shipment_company) {
+        $deprecated_info = kargoTR_get_deprecated_info($shipment_company);
+        $deprecated_note = sprintf(
+            /* translators: 1: deprecated cargo company name, 2: successor cargo company name */
+            __('%1$s kullanımdan kaldırıldı, kargo bilgisi %2$s firmasına kaydedildi.', 'kargo-takip-turkiye'),
+            kargoTR_get_company_name($shipment_company),
+            kargoTR_get_company_name($mapped_company)
+        );
+        if (!empty($deprecated_info['reason'])) {
+            $deprecated_note .= ' ' . $deprecated_info['reason'];
+        }
+        $shipment_company = $mapped_company;
+    }
+
     // Check if the order id is valid
     if (!kargoTR_is_valid_order_id($order_id)) {
         return new WP_Error('rest_invalid_order_id', 'Invalid order id. Please check order id', array('status' => 404));
@@ -82,6 +99,10 @@ function kargoTR_api_add_tracking_code($request) {
     $order = wc_get_order($order_id);
     if (!$order) {
         return new WP_Error('rest_invalid_order', 'Order not found', array('status' => 404));
+    }
+
+    if ($deprecated_note) {
+        $order->add_order_note($deprecated_note);
     }
 
     $tracking_company_order = $order->get_meta('tracking_company', true);
@@ -142,6 +163,8 @@ function kargoTR_api_add_tracking_code($request) {
             }
         }
 
+        // İstatistikler için zaman damgası: admin tarafıyla aynı davranış
+        $order->update_meta_data('_kargo_takip_timestamp', current_time('mysql'));
         $order->save();
 
         // Review notice için sayacı artır
@@ -155,6 +178,11 @@ function kargoTR_api_add_tracking_code($request) {
                 $tracking_code
             )
         );
+
+        // Durumu "Kargoya Verildi" yap: admin tarafıyla aynı davranış
+        if (!in_array($order->get_status(), kargoTR_protected_order_statuses(), true)) {
+            $order->update_status('kargo-verildi', __('Kargo takip bilgisi API ile eklendi', 'kargo-takip-turkiye'));
+        }
 
         // Send mail to customer if mail send option is true
         if ($mail_send_general_option == 'yes') {

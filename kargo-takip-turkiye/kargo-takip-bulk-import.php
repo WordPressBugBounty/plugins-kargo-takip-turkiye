@@ -140,6 +140,13 @@ function kargoTR_handle_csv_upload() {
         // Skip empty rows
         if (empty($data[0])) continue;
 
+        // Eksik sütunlu satır: takip kodu olmadan bildirim gitmemeli
+        if (count($data) < 3 || trim($data[2]) === '') {
+            $error_count++;
+            $errors[] = sprintf('Satır atlandı (eksik bilgi): %s', esc_html(implode(',', $data)));
+            continue;
+        }
+
         // Clean data
         $order_id = intval(trim($data[0]));
         $cargo_company_input = trim($data[1]);
@@ -177,6 +184,18 @@ function kargoTR_handle_csv_upload() {
             $error_count++;
             $errors[] = "Sipariş {$order_id}: Geçersiz kargo firması '{$cargo_company_input}'.";
             continue;
+        }
+
+        // Kullanımdan kaldırılan firma girildiyse devralan firmaya kaydet
+        $mapped_key = kargoTR_map_deprecated_key($cargo_company_key);
+        if ($mapped_key !== $cargo_company_key) {
+            $order->add_order_note(sprintf(
+                /* translators: 1: deprecated cargo company name, 2: successor cargo company name */
+                __('%1$s kullanımdan kaldırıldı, kargo bilgisi %2$s firmasına kaydedildi.', 'kargo-takip-turkiye'),
+                kargoTR_get_company_name($cargo_company_key),
+                kargoTR_get_company_name($mapped_key)
+            ));
+            $cargo_company_key = $mapped_key;
         }
 
         // Update Order Meta (HPOS uyumlu)
